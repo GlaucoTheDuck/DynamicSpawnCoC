@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "dynamicspawncoc",
+	"version": "${version}",
+	"name": "Dynamic Spawn CoC",
+	"description": "Your mod description here",
+	"authors": [
+		"Your Name"
+	],
+	"contact": {},
+	"license": "MIT",
+	"icon": "assets/dynamicspawncoc/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.dynamicspawncoc.DynamicSpawnCoC"
+		],
+		"client": [
+			"com.dynamicspawncoc.DynamicSpawnCoCClient"
+		]
+	},
+	"mixins": [
+		"dynamicspawncoc.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"fabric-api": "*",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"cobblemon": ">=1.6.0"
+	},
+	"suggests": {}
+}

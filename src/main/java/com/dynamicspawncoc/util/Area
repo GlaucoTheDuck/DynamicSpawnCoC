@@ -1,0 +1,84 @@
+como texto pois ainda tenho q organizar
+
+val horizontalRange = cfg.maxNearbyBlocksHorizontalRange
+
+
+            val verticalRange = cfg.maxNearbyBlocksVerticalRange
+            val nearbyBlocks: List<BlockState> = buildList {
+                for (dx in -horizontalRange..horizontalRange) {
+                    for (dz in -horizontalRange..horizontalRange) {
+                        for (dy in -verticalRange..verticalRange) {
+                            val checkPos = BlockPos(pos.x + dx, pos.y + dy, pos.z + dz)
+                            add(world.getBlockState(checkPos))
+                        }
+                    }
+                }
+            }
+
+            val spawningZone = SpawningArea(
+                cause = evt.ctx.cause,
+                world = world,
+                baseX = pos.x,
+                baseY = pos.y,
+                baseZ = pos.z,
+                length = cfg.worldSliceDiameter,
+                height = cfg.worldSliceHeight,
+                width = 5
+            )
+
+            val sliceDiameter = cfg.worldSliceDiameter
+            val sliceHeight = cfg.worldSliceHeight
+            val blocks = Array(sliceDiameter) { x ->
+                Array(sliceHeight) { y ->
+                    Array(sliceDiameter) { z ->
+                        val blockPos = BlockPos(pos.x + x, pos.y + y, pos.z + z)
+                        val state = world.getBlockState(blockPos)
+                        val light = world.getMaxLocalRawBrightness(blockPos)
+                        val skyLight = world.lightEngine.getLayerListener(LightLayer.SKY).getLightValue(blockPos)
+                        WorldSlice.BlockData(state, light, skyLight)
+                    }
+                }
+            }
+
+            val skyLevel = Array(sliceDiameter) { x ->
+                Array(sliceDiameter) { z ->
+                    // Encontra a altura mais alta onde ainda vê o céu
+                    var skyY = world.maxBuildHeight
+                    for (y in world.maxBuildHeight downTo pos.y) {
+                        if (world.canSeeSky(BlockPos(pos.x + x, y, pos.z + z))) {
+                            skyY = y
+                            break
+                        }
+                    }
+                    skyY
+                }
+            }
+
+            val nearbyEntityPositions = world.getEntitiesOfClass<LivingEntity>(
+                LivingEntity::class.java,
+                AABB.ofSize(pos.toVec3d(), sliceDiameter.toDouble(), sliceHeight.toDouble(), sliceDiameter.toDouble())
+            ).map { it.position() }
+
+            val worldSlice = WorldSlice(
+                cause = evt.ctx.cause,
+                world = world,
+                baseX = pos.x,
+                baseY = pos.y,
+                baseZ = pos.z,
+                blocks = blocks,
+                skyLevel = skyLevel,
+                nearbyEntityPositions = nearbyEntityPositions
+            )
+
+            val spawningContext = AreaSpawningContext(
+                world = world,
+                cause = evt.ctx.cause,
+                position = pos,
+                light = evt.ctx.light, // TODO: Trocar
+                skyLight = evt.ctx.skyLight, // TODO: Ver do que se trata
+                canSeeSky = evt.ctx.canSeeSky,
+                influences = evt.ctx.influences,
+                height = world.getHeight(Heightmap.Types.MOTION_BLOCKING, pos.x, pos.z),
+                nearbyBlocks = nearbyBlocks,
+                slice = worldSlice
+            )
